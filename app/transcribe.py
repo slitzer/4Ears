@@ -3,18 +3,12 @@ import logging
 import tempfile
 import shutil
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from pydub import AudioSegment
 import whisperx
 
-from .main import Transcript, DATABASE_URL
+from .db import Transcript, DATABASE_URL, SessionLocal
 
 logger = logging.getLogger(__name__)
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine)
-
 
 def _convert_to_wav(path: str, temp_dir: str) -> str:
     """Convert input audio to wav if necessary and return new path."""
