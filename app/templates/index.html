@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>4Ears</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container py-4">
+    <h1>Upload Audio/Video</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data" class="mb-3">
+        <input class="form-control" type="file" name="file" accept="audio/*,video/*" required>
+        <button class="btn btn-primary mt-2" type="submit">Upload & Transcribe</button>
+    </form>
+    <h2>Past Transcripts</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr><th>File</th><th>Status</th><th>Result</th><th>Created</th></tr>
+        </thead>
+        <tbody>
+        {% for f in files %}
+            <tr>
+                <td>{{ f.filename }}</td>
+                <td>{{ f.status }}</td>
+                <td>{{ f.result or '' }}</td>
+                <td>{{ f.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
