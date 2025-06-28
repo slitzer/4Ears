@@ -1,117 +1,51 @@
 # 4Ears
 
-# WhisperX Transcription Service
+**4Ears** is a lightweight web interface for generating transcripts using [WhisperX](https://github.com/m-bain/whisperX). Upload audio or video files, let the server transcribe them, and browse previous results – all contained in a simple Docker setup.
 
-A self-hosted transcription web app powered by WhisperX. Upload audio/video files, get transcripts, and browse your history — all via Docker Compose.
+## Features
 
-## 🛠️ Tech Stack
+- Upload `wav`, `mp3`, `m4a`, `mp4`, `mkv` and other common formats
+- Background transcription with optional speaker diarization
+- View the status and result of each uploaded file
+- Runs entirely in Docker with a single `docker-compose up`
 
-- **Backend**: FastAPI  
-- **Transcription**: WhisperX  
-- **Frontend**: Jinja2 + Bootstrap  
-- **Storage**: Local filesystem + SQLite  
-- **Containerization**: Docker, Docker Compose  
+## Getting Started
 
-## 🚀 Features
+1. Clone the repository
+2. Copy `.env.example` to `.env` and adjust values if needed  
+   - `HF_TOKEN` – optional token for models requiring authentication
+   - `MODEL_SIZE` – WhisperX model size (e.g. `small`)
+   - `DATABASE_URL` – connection string for the SQLite database
+3. Launch the stack with Docker Compose:
 
-- Upload audio/video (wav, mp3, m4a, mp4, mkv)  
-- Real-time transcription with speaker diarization  
-- List, view & download past transcripts  
-- Configurable WhisperX models via environment  
-- Deployable with a single `docker-compose up`  
+   ```bash
+   docker-compose up -d
+   ```
 
-## 🗂️ Project Structure
+4. Visit `http://localhost:7210` in your browser and start uploading files.
 
+Uploaded media and transcripts are stored under `app/data` with metadata in `db.sqlite3`. The web interface lists every past transcription and allows downloading the generated text.
 
+## Project Layout
 
-├── docker-compose.yml # service definitions
-├── Dockerfile # builds the FastAPI image
-├── .env # HF_TOKEN, MODEL_SIZE, etc.
-├── README.md # this file
-└── app
-├── main.py # FastAPI entrypoint + routing
-├── transcribe.py # WhisperX logic (adapted)
-├── models.py # SQLAlchemy models
-├── templates
-│ └── index.html # upload form + history table
-├── static
-│ └── style.css # custom styles
-├── data # uploaded files & outputs
-└── db.sqlite3 # SQLite database
+```
+docker-compose.yml  # service definitions
+Dockerfile          # application container
+app/
+├── main.py         # FastAPI application
+├── transcribe.py   # placeholder transcription logic
+├── templates/      # Jinja2 HTML templates
+└── static/         # CSS files
+```
 
+## Roadmap
 
-## 🛠️ Installation & Usage
+The project is in early stages. Planned improvements include:
 
-1. **Clone the repo**  
+- Live recording directly from the browser
+- Multi-user support with optional authentication
+- A proper job queue for WhisperX processing
+- GPU acceleration and horizontal scaling
+- A polished UI with drag-and-drop uploads and mobile support
 
-Configure environment
-
-cp .env.example .env
-# Edit .env to add your HF_TOKEN (if using diarization)
-
-
-Launch with Docker Compose
-
-docker-compose up -d
-Access the app
-Navigate to http://localhost:7210
-
-Upload & Transcribe
-
-Click Choose File to pick an audio/video file
-
-Hit Upload & Transcribe
-
-Watch progress, then view/download transcripts
-
-Your history lives in the table below
-
-📥 Docker Compose
-
-
-🧭 Roadmap
-Live Recording Applet
-
-Browser-based mic selector + user metadata (username, session name)
-
-Chunk audio every 5–10 minutes (or on size threshold)
-
-Auto-upload chunks to server & enqueue for transcription
-
-WebSocket or SSE for real-time status updates
-
-Multi-User Support
-
-Handle 8–10 simultaneous recording/transcription sessions
-
-Per-user workspace & history
-
-Optional authentication (OAuth/JWT)
-
-Meeting Recorder Mode
-
-“Meeting” project type: single file + multi-speaker diarization
-
-Automatic chunk splitting to avoid huge uploads
-
-Bulk download ZIP of transcripts and audio
-
-Scaling & Resilience
-
-Redis or RabbitMQ queue for transcription jobs
-
-Optional GPU support for faster WhisperX runs
-
-Docker Swarm/Kubernetes manifests for horizontal scaling
-
-UX & Misc
-
-Themable skins, for DnD or work meetings
-
-User landing page with uploadable artwork, etc..
-
-Drag-and-drop upload area
-
-Dark mode toggle bu default (because midnight sessions)
-
-Mobile-responsive layout for on-the-go transcriptions
+Contributions and feedback are welcome!
