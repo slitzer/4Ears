@@ -2,29 +2,12 @@ from fastapi import FastAPI, Request, UploadFile, File, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from sqlalchemy.orm import sessionmaker, declarative_base
-from datetime import datetime
+from .db import SessionLocal, Transcript
 import shutil
 import os
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./db.sqlite3")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "data")
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine)
-Base = declarative_base()
-
-class Transcript(Base):
-    __tablename__ = "transcripts"
-    id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String, nullable=False)
-    status = Column(String, default="pending")
-    result = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-Base.metadata.create_all(bind=engine)
 
 from .transcribe import transcribe_file
 
