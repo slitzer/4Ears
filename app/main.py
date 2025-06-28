@@ -8,7 +8,6 @@ from datetime import datetime
 import shutil
 import os
 
-from .transcribe import transcribe_file
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./db.sqlite3")
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -26,6 +25,8 @@ class Transcript(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)
+
+from .transcribe import transcribe_file
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")

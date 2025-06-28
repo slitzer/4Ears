@@ -1,25 +1,60 @@
+import os
+import logging
+import tempfile
+import shutil
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import os
-import time
+from pydub import AudioSegment
+import whisperx
 
-from .main import Base, Transcript, DATABASE_URL
+from .main import Transcript, DATABASE_URL
+
+logger = logging.getLogger(__name__)
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 
 
-def transcribe_file(record_id: int, file_path: str):
+def _convert_to_wav(path: str, temp_dir: str) -> str:
+    """Convert input audio to wav if necessary and return new path."""
+    if path.lower().endswith(".wav"):
+        return path
+    wav_path = os.path.join(temp_dir, "audio.wav")
+    audio = AudioSegment.from_file(path)
+    audio.export(wav_path, format="wav")
+    return wav_path
+
+
+def _run_whisperx(wav_path: str) -> str:
+    model = whisperx.load_model("base", device="cpu", compute_type="float32")
+    result = model.transcribe(wav_path, batch_size=16)
+    segments = result.get("segments", [])
+    return " ".join(s.get("text", "") for s in segments)
+
+
+def transcribe_file(record_id: int, file_path: str) -> None:
     db = SessionLocal()
     record = db.query(Transcript).get(record_id)
     if not record:
         db.close()
         return
+
     record.status = "processing"
     db.commit()
-    # Placeholder transcription logic
-    time.sleep(2)  # simulate work
-    record.status = "completed"
-    record.result = f"Transcribed text for {os.path.basename(file_path)}"
-    db.commit()
-    db.close()
+
+    temp_dir = tempfile.mkdtemp(prefix="transcribe_")
+    try:
+        wav_path = _convert_to_wav(file_path, temp_dir)
+        text = _run_whisperx(wav_path)
+        record.status = "completed"
+        record.result = text
+        db.commit()
+    except Exception as exc:
+        logger.exception("Transcription failed")
+        record.status = "failed"
+        record.result = str(exc)
+        db.commit()
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        db.close()
