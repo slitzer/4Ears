@@ -1,8 +1,10 @@
-from fastapi import FastAPI, Request, UploadFile, File, BackgroundTasks
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request, UploadFile, File, BackgroundTasks, Form, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from .db import SessionLocal, Transcript
+from starlette.middleware.sessions import SessionMiddleware
+from passlib.context import CryptContext
+from .db import SessionLocal, Transcript, User
 import shutil
 import os
 
@@ -11,17 +13,30 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 from .transcribe import transcribe_file
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI()
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SESSION_SECRET", "change-me"))
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 
 templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "templates"))
 
+def get_current_user(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return None
+    db = SessionLocal()
+    user = db.query(User).get(user_id)
+    db.close()
+    return user
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
+    user = get_current_user(request)
     db = SessionLocal()
     files = db.query(Transcript).order_by(Transcript.created_at.desc()).all()
     db.close()
-    return templates.TemplateResponse("index.html", {"request": request, "files": files})
+    return templates.TemplateResponse("index.html", {"request": request, "files": files, "user": user})
 
 @app.post("/upload", response_class=HTMLResponse)
 def upload_file(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
@@ -37,3 +52,63 @@ def upload_file(request: Request, background_tasks: BackgroundTasks, file: Uploa
     background_tasks.add_task(transcribe_file, record.id, file_path)
     db.close()
     return templates.TemplateResponse("upload_success.html", {"request": request, "filename": file.filename})
+
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login", response_class=HTMLResponse)
+def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    db = SessionLocal()
+    user = db.query(User).filter_by(username=username).first()
+    if user and pwd_context.verify(password, user.password_hash):
+        request.session["user_id"] = user.id
+        db.close()
+        return RedirectResponse("/", status_code=302)
+    db.close()
+    return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials"})
+
+@app.get("/register", response_class=HTMLResponse)
+def register_form(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.post("/register", response_class=HTMLResponse)
+def register(request: Request, username: str = Form(...), password: str = Form(...)):
+    db = SessionLocal()
+    existing = db.query(User).filter_by(username=username).first()
+    if existing:
+        db.close()
+        return templates.TemplateResponse("register.html", {"request": request, "error": "Username taken"})
+    user = User(username=username, password_hash=pwd_context.hash(password))
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    request.session["user_id"] = user.id
+    db.close()
+    return RedirectResponse("/", status_code=302)
+
+@app.get("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse("/", status_code=302)
+
+@app.get("/settings", response_class=HTMLResponse)
+def settings_form(request: Request):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    return templates.TemplateResponse("settings.html", {"request": request, "user": user})
+
+@app.post("/settings", response_class=HTMLResponse)
+def settings_save(request: Request, hf_token: str = Form(""), openai_token: str = Form("")):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+    db = SessionLocal()
+    db_user = db.query(User).get(user.id)
+    db_user.hf_token = hf_token
+    db_user.openai_token = openai_token
+    db.commit()
+    db.refresh(db_user)
+    db.close()
+    return templates.TemplateResponse("settings.html", {"request": request, "user": db_user, "success": True})
