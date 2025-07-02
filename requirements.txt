@@ -7,3 +7,4 @@ pydub
 
 passlib[bcrypt]
 python-multipart
+itsdangerous
