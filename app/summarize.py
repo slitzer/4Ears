@@ -14,9 +14,9 @@ def summarize_openai(text: str, mode: str) -> str:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY not configured")
-    openai.api_key = api_key
+    client = openai.OpenAI(api_key=api_key)
     prompt = f"Summarize the following audio transcript in a clear and concise format ({mode}):\n\n{text}"
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
         messages=[
             {"role": "system", "content": "You are a helpful AI assistant that summarizes transcripts."},
@@ -24,7 +24,7 @@ def summarize_openai(text: str, mode: str) -> str:
         ],
         temperature=0.3,
     )
-    return response['choices'][0]['message']['content']
+    return response.choices[0].message.content
 
 
 def summarize_ollama(text: str, mode: str) -> str:
