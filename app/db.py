@@ -27,6 +27,8 @@ def _ensure_schema() -> None:
                 )
             if "summary_mode" not in columns:
                 conn.execute(text("ALTER TABLE transcripts ADD COLUMN summary_mode TEXT"))
+            if "user_id" not in columns:
+                conn.execute(text("ALTER TABLE transcripts ADD COLUMN user_id INTEGER"))
 
 class Transcript(Base):
     __tablename__ = "transcripts"
@@ -38,6 +40,7 @@ class Transcript(Base):
     summary = Column(String, nullable=True)
     summary_status = Column(String, default="pending")
     summary_mode = Column(String, nullable=True)
+    user_id = Column(Integer, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class User(Base):

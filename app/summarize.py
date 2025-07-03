@@ -3,15 +3,15 @@ import requests
 import openai
 
 
-def summarize(text: str, mode: str = "basic_summary") -> str:
+def summarize(text: str, mode: str = "basic_summary", openai_api_key: str | None = None) -> str:
     engine = os.getenv("SUMMARIZATION_ENGINE", "openai")
     if engine == "openai":
-        return summarize_openai(text, mode)
+        return summarize_openai(text, mode, openai_api_key)
     return summarize_ollama(text, mode)
 
 
-def summarize_openai(text: str, mode: str) -> str:
-    api_key = os.getenv("OPENAI_API_KEY")
+def summarize_openai(text: str, mode: str, api_key: str | None = None) -> str:
+    api_key = api_key or os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY not configured")
     client = openai.OpenAI(api_key=api_key)

@@ -34,7 +34,10 @@ def get_current_user(request: Request):
 def index(request: Request):
     user = get_current_user(request)
     db = SessionLocal()
-    files = db.query(Transcript).order_by(Transcript.created_at.desc()).all()
+    query = db.query(Transcript)
+    if user:
+        query = query.filter(Transcript.user_id == user.id)
+    files = query.order_by(Transcript.created_at.desc()).all()
     db.close()
     return templates.TemplateResponse("index.html", {"request": request, "files": files, "user": user})
 
@@ -45,7 +48,8 @@ def upload_file(request: Request, background_tasks: BackgroundTasks, file: Uploa
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    record = Transcript(filename=file.filename)
+    user = get_current_user(request)
+    record = Transcript(filename=file.filename, user_id=user.id if user else None)
     db.add(record)
     db.commit()
     db.refresh(record)
