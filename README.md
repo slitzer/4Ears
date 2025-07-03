@@ -1,12 +1,13 @@
 # 4Ears
 
-**4Ears** is a lightweight web interface for generating transcripts using [WhisperX](https://github.com/m-bain/whisperX). Upload audio or video files, let the server transcribe them, and browse previous results – all contained in a simple Docker setup.
+**4Ears** is a lightweight web interface for generating transcripts and summaries. It uses [WhisperX](https://github.com/m-bain/whisperX) for speech-to-text and can optionally send the transcript to an LLM (OpenAI or local) for summarization.
 
 ## Features
 
 - Upload `wav`, `mp3`, `m4a`, `mp4`, `mkv` and other common formats
 - Background transcription with optional speaker diarization
 - Timestamped output with speaker labels when a Hugging Face token is provided
+- Optional summaries via OpenAI or a local LLM
 - View the status and result of each uploaded file
 - Runs entirely in Docker with a single `docker-compose up`
 
@@ -17,6 +18,9 @@
    - `HF_TOKEN` – optional token for Hugging Face models, used to enable speaker diarization
    - `MODEL_SIZE` – WhisperX model size (e.g. `small`)
    - `DATABASE_URL` – connection string for the SQLite database
+   - `OPENAI_API_KEY` – optional key for OpenAI summarization
+   - `SUMMARIZATION_ENGINE` – `openai` or `ollama`
+   - `OLLAMA_URL` and `OLLAMA_MODEL` – endpoint and model name for local summarization (when using `ollama`)
 3. Create a directory named `db` for the SQLite database then launch the stack with Docker Compose:
 
    ```bash
@@ -27,6 +31,8 @@
 4. Visit `http://localhost:7210` in your browser and start uploading files.
 
 Uploaded media and transcripts are stored under `app/data` with metadata in `db/db.sqlite3`. The web interface lists every past transcription and allows downloading the generated text.
+
+If an `OPENAI_API_KEY` is provided (or a local Ollama server is configured) you can request summaries for completed transcripts directly from the UI. Choose one of the summary modes and the server will queue the job in the background.
 
 ## Project Layout
 

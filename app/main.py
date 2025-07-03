@@ -11,7 +11,7 @@ import os
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "data")
 
-from .transcribe import transcribe_file
+from .transcribe import transcribe_file, summarize_record
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -137,3 +137,18 @@ def download_text(file_id: int):
     filename = f"{record.filename}.txt"
     db.close()
     return Response(text, media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@app.post("/summarize/{file_id}")
+def summarize(file_id: int, background_tasks: BackgroundTasks, mode: str = Form("basic_summary")):
+    db = SessionLocal()
+    record = db.query(Transcript).get(file_id)
+    if not record or not record.result:
+        db.close()
+        return RedirectResponse("/", status_code=302)
+    if record.summary_status == "processing":
+        db.close()
+        return RedirectResponse("/", status_code=302)
+    background_tasks.add_task(summarize_record, record.id, mode)
+    db.close()
+    return RedirectResponse("/", status_code=302)

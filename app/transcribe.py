@@ -6,7 +6,8 @@ import shutil
 from pydub import AudioSegment
 import whisperx
 
-from .db import Transcript, DATABASE_URL, SessionLocal
+from .db import Transcript, SessionLocal
+from .summarize import summarize
 
 logger = logging.getLogger(__name__)
 
@@ -83,4 +84,30 @@ def transcribe_file(record_id: int, file_path: str) -> None:
         db.commit()
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
+        db.close()
+
+
+def summarize_record(record_id: int, mode: str) -> None:
+    db = SessionLocal()
+    record = db.query(Transcript).get(record_id)
+    if not record or not record.result:
+        db.close()
+        return
+
+    record.summary_status = "processing"
+    record.summary_mode = mode
+    db.commit()
+
+    try:
+        text = record.result
+        summary = summarize(text, mode)
+        record.summary_status = "completed"
+        record.summary = summary
+        db.commit()
+    except Exception as exc:
+        logger.exception("Summarization failed")
+        record.summary_status = "failed"
+        record.summary = str(exc)
+        db.commit()
+    finally:
         db.close()
