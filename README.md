@@ -16,15 +16,16 @@
    - `HF_TOKEN` – optional token for models requiring authentication
    - `MODEL_SIZE` – WhisperX model size (e.g. `small`)
    - `DATABASE_URL` – connection string for the SQLite database
-3. Launch the stack with Docker Compose:
+3. Create a directory named `db` for the SQLite database then launch the stack with Docker Compose:
 
    ```bash
+   mkdir -p db
    docker-compose up -d
    ```
 
 4. Visit `http://localhost:7210` in your browser and start uploading files.
 
-Uploaded media and transcripts are stored under `app/data` with metadata in `db.sqlite3`. The web interface lists every past transcription and allows downloading the generated text.
+Uploaded media and transcripts are stored under `app/data` with metadata in `db/db.sqlite3`. The web interface lists every past transcription and allows downloading the generated text.
 
 ## Project Layout
 
