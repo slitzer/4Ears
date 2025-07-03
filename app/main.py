@@ -7,6 +7,7 @@ from passlib.context import CryptContext
 from .db import SessionLocal, Transcript, User
 import shutil
 import os
+import re
 
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -45,17 +46,19 @@ def index(request: Request):
 def upload_file(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     db = SessionLocal()
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    filename = os.path.basename(file.filename)
+    filename = re.sub(r"[^A-Za-z0-9._-]", "_", filename)
+    file_path = os.path.join(UPLOAD_DIR, filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     user = get_current_user(request)
-    record = Transcript(filename=file.filename, user_id=user.id if user else None)
+    record = Transcript(filename=filename, user_id=user.id if user else None)
     db.add(record)
     db.commit()
     db.refresh(record)
     background_tasks.add_task(transcribe_file, record.id, file_path)
     db.close()
-    return templates.TemplateResponse("upload_success.html", {"request": request, "filename": file.filename, "file_id": record.id})
+    return templates.TemplateResponse("upload_success.html", {"request": request, "filename": filename, "file_id": record.id})
 
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
