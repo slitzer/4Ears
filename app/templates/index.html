@@ -25,7 +25,7 @@
     <h2>Past Transcripts</h2>
     <table class="table table-striped">
         <thead>
-            <tr><th>File</th><th>Status</th><th>Result</th><th>Created</th></tr>
+            <tr><th>File</th><th>Status</th><th>Result</th><th>Summary</th><th>Created</th></tr>
         </thead>
         <tbody>
         {% for f in files %}
@@ -36,6 +36,21 @@
                     {% if f.result %}
                         <span class="result-snippet">{{ f.result[:150] }}{% if f.result|length > 150 %}...{% endif %}</span>
                         <a class="btn btn-sm btn-secondary ms-2" href="/download/{{ f.id }}">Download</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if f.summary %}
+                        <span class="result-snippet">{{ f.summary[:100] }}{% if f.summary|length > 100 %}...{% endif %}</span>
+                    {% elif f.result %}
+                        <form action="/summarize/{{ f.id }}" method="post" class="d-flex">
+                            <select class="form-select form-select-sm me-2" name="mode">
+                                <option value="basic_summary">TL;DR</option>
+                                <option value="meeting_notes">Meeting Notes</option>
+                                <option value="action_items">Action Items</option>
+                                <option value="verbatim_cleaned">Clean Verbatim</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" type="submit">Summarize</button>
+                        </form>
                     {% endif %}
                 </td>
                 <td>{{ f.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>

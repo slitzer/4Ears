@@ -18,6 +18,9 @@ class Transcript(Base):
     filename = Column(String, nullable=False)
     status = Column(String, default="pending")
     result = Column(String, nullable=True)
+    summary = Column(String, nullable=True)
+    summary_status = Column(String, default="pending")
+    summary_mode = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class User(Base):
