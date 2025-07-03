@@ -20,11 +20,42 @@ def _convert_to_wav(path: str, temp_dir: str) -> str:
     return wav_path
 
 
-def _run_whisperx(wav_path: str) -> str:
+def _run_whisperx(wav_path: str, hf_token: str | None = None) -> str:
+    """Run WhisperX with optional diarization and return timestamped text."""
+
+    # Load ASR model
     model = whisperx.load_model("base", device="cpu", compute_type="float32")
+
+    # Transcribe audio
     result = model.transcribe(wav_path, batch_size=16)
+
+    # Align words to improve timestamps
+    model_a, metadata = whisperx.load_align_model(language_code="en", device="cpu")
+    result = whisperx.align(result["segments"], model_a, metadata, wav_path, device="cpu")
+
+    # Perform speaker diarization if token provided
+    if hf_token:
+        try:
+            diarize_model = whisperx.diarize.DiarizationPipeline(use_auth_token=hf_token, device="cpu")
+            diarize_segments = diarize_model(wav_path)
+            result = whisperx.assign_word_speakers(diarize_segments, result)
+        except AttributeError:
+            # Older versions of whisperx do not have diarization
+            logger.warning("DiarizationPipeline not available; skipping diarization")
+
     segments = result.get("segments", [])
-    return " ".join(s.get("text", "") for s in segments)
+    lines = []
+    for seg in segments:
+        start = seg.get("start", 0)
+        end = seg.get("end", 0)
+        text = seg.get("text", "")
+        speaker = seg.get("speaker")
+        if speaker is not None:
+            lines.append(f"[{start:.2f}s - {end:.2f}s] Speaker {speaker}: {text}")
+        else:
+            lines.append(f"[{start:.2f}s - {end:.2f}s] {text}")
+
+    return "\n".join(lines)
 
 
 def transcribe_file(record_id: int, file_path: str) -> None:
@@ -40,7 +71,8 @@ def transcribe_file(record_id: int, file_path: str) -> None:
     temp_dir = tempfile.mkdtemp(prefix="transcribe_")
     try:
         wav_path = _convert_to_wav(file_path, temp_dir)
-        text = _run_whisperx(wav_path)
+        hf_token = os.getenv("HF_TOKEN", "")
+        text = _run_whisperx(wav_path, hf_token or None)
         record.status = "completed"
         record.result = text
         db.commit()
