@@ -18,6 +18,7 @@
    - `HF_TOKEN` – optional token for Hugging Face models, used to enable speaker diarization
    - `MODEL_SIZE` – WhisperX model size (e.g. `small`)
    - `DATABASE_URL` – connection string for the SQLite database
+   - `SESSION_SECRET` – secret key for signing session cookies (use a strong random string)
    - `OPENAI_API_KEY` – optional key for OpenAI summarization
    - `SUMMARIZATION_ENGINE` – `openai` or `ollama`
    - `OLLAMA_URL` and `OLLAMA_MODEL` – endpoint and model name for local summarization (when using `ollama`)
