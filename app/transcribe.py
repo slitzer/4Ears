@@ -6,7 +6,7 @@ import shutil
 from pydub import AudioSegment
 import whisperx
 
-from .db import Transcript, SessionLocal
+from .db import Transcript, SessionLocal, User
 from .summarize import summarize
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,10 @@ def transcribe_file(record_id: int, file_path: str) -> None:
     temp_dir = tempfile.mkdtemp(prefix="transcribe_")
     try:
         wav_path = _convert_to_wav(file_path, temp_dir)
-        hf_token = os.getenv("HF_TOKEN", "")
+        user = db.query(User).get(record.user_id) if record.user_id else None
+        hf_token = (
+            user.hf_token if user and user.hf_token else os.getenv("HF_TOKEN", "")
+        )
         text = _run_whisperx(wav_path, hf_token or None)
         record.status = "completed"
         record.result = text
@@ -100,7 +103,11 @@ def summarize_record(record_id: int, mode: str) -> None:
 
     try:
         text = record.result
-        summary = summarize(text, mode)
+        user = db.query(User).get(record.user_id) if record.user_id else None
+        openai_token = (
+            user.openai_token if user and user.openai_token else os.getenv("OPENAI_API_KEY")
+        )
+        summary = summarize(text, mode, openai_api_key=openai_token)
         record.summary_status = "completed"
         record.summary = summary
         db.commit()
