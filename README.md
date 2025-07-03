@@ -6,6 +6,7 @@
 
 - Upload `wav`, `mp3`, `m4a`, `mp4`, `mkv` and other common formats
 - Background transcription with optional speaker diarization
+- Timestamped output with speaker labels when a Hugging Face token is provided
 - View the status and result of each uploaded file
 - Runs entirely in Docker with a single `docker-compose up`
 
@@ -13,7 +14,7 @@
 
 1. Clone the repository
 2. Copy `.env.example` to `.env` and adjust values if needed  
-   - `HF_TOKEN` – optional token for models requiring authentication
+   - `HF_TOKEN` – optional token for Hugging Face models, used to enable speaker diarization
    - `MODEL_SIZE` – WhisperX model size (e.g. `small`)
    - `DATABASE_URL` – connection string for the SQLite database
 3. Create a directory named `db` for the SQLite database then launch the stack with Docker Compose:
