@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./db/db.sqlite3")
@@ -10,6 +10,23 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
+
+
+def _ensure_schema() -> None:
+    inspector = inspect(engine)
+    if "transcripts" in inspector.get_table_names():
+        columns = {c["name"] for c in inspector.get_columns("transcripts")}
+        with engine.begin() as conn:
+            if "summary" not in columns:
+                conn.execute(text("ALTER TABLE transcripts ADD COLUMN summary TEXT"))
+            if "summary_status" not in columns:
+                conn.execute(
+                    text(
+                        "ALTER TABLE transcripts ADD COLUMN summary_status TEXT DEFAULT 'pending'"
+                    )
+                )
+            if "summary_mode" not in columns:
+                conn.execute(text("ALTER TABLE transcripts ADD COLUMN summary_mode TEXT"))
 
 class Transcript(Base):
     __tablename__ = "transcripts"
@@ -34,3 +51,4 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)
+_ensure_schema()
