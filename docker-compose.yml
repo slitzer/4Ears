@@ -6,6 +6,6 @@ services:
       - "7210:7210"
     volumes:
       - ./app/data:/app/app/data
-      - ./db.sqlite3:/app/db.sqlite3
+      - ./db:/app/db
     env_file:
       - .env
