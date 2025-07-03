@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, UploadFile, File, BackgroundTasks, Form, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -51,7 +51,7 @@ def upload_file(request: Request, background_tasks: BackgroundTasks, file: Uploa
     db.refresh(record)
     background_tasks.add_task(transcribe_file, record.id, file_path)
     db.close()
-    return templates.TemplateResponse("upload_success.html", {"request": request, "filename": file.filename})
+    return templates.TemplateResponse("upload_success.html", {"request": request, "filename": file.filename, "file_id": record.id})
 
 @app.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
@@ -112,3 +112,28 @@ def settings_save(request: Request, hf_token: str = Form(""), openai_token: str 
     db.refresh(db_user)
     db.close()
     return templates.TemplateResponse("settings.html", {"request": request, "user": db_user, "success": True})
+
+
+@app.get("/status/{file_id}")
+def status(file_id: int):
+    db = SessionLocal()
+    record = db.query(Transcript).get(file_id)
+    if not record:
+        db.close()
+        return {"status": "unknown"}
+    status = record.status
+    db.close()
+    return {"status": status}
+
+
+@app.get("/download/{file_id}")
+def download_text(file_id: int):
+    db = SessionLocal()
+    record = db.query(Transcript).get(file_id)
+    if not record or not record.result:
+        db.close()
+        return RedirectResponse("/", status_code=302)
+    text = record.result
+    filename = f"{record.filename}.txt"
+    db.close()
+    return Response(text, media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={filename}"})
