@@ -27,7 +27,7 @@ def get_current_user(request: Request):
     if not user_id:
         return None
     db = SessionLocal()
-    user = db.query(User).get(user_id)
+    user = db.get(User, user_id)
     db.close()
     return user
 
@@ -112,7 +112,7 @@ def settings_save(request: Request, hf_token: str = Form(""), openai_token: str 
     if not user:
         return RedirectResponse("/login", status_code=302)
     db = SessionLocal()
-    db_user = db.query(User).get(user.id)
+    db_user = db.get(User, user.id)
     db_user.hf_token = hf_token
     db_user.openai_token = openai_token
     db.commit()
@@ -124,7 +124,7 @@ def settings_save(request: Request, hf_token: str = Form(""), openai_token: str 
 @app.get("/status/{file_id}")
 def status(file_id: int):
     db = SessionLocal()
-    record = db.query(Transcript).get(file_id)
+    record = db.get(Transcript, file_id)
     if not record:
         db.close()
         return {"status": "unknown"}
@@ -136,7 +136,7 @@ def status(file_id: int):
 @app.get("/download/{file_id}")
 def download_text(file_id: int):
     db = SessionLocal()
-    record = db.query(Transcript).get(file_id)
+    record = db.get(Transcript, file_id)
     if not record or not record.result:
         db.close()
         return RedirectResponse("/", status_code=302)
@@ -149,7 +149,7 @@ def download_text(file_id: int):
 @app.post("/summarize/{file_id}")
 def summarize(file_id: int, background_tasks: BackgroundTasks, mode: str = Form("basic_summary")):
     db = SessionLocal()
-    record = db.query(Transcript).get(file_id)
+    record = db.get(Transcript, file_id)
     if not record or not record.result:
         db.close()
         return RedirectResponse("/", status_code=302)
