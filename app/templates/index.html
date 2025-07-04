@@ -17,6 +17,7 @@
         {% endif %}
         <button id="dark-toggle" type="button" class="btn btn-sm btn-secondary ms-2"></button>
     </nav>
+    <div class="main-content">
     <h1>Upload Audio/Video</h1>
     <form action="/upload" method="post" enctype="multipart/form-data" class="mb-3">
         <input class="form-control" type="file" name="file" accept="audio/*,video/*" required>
@@ -58,5 +59,6 @@
         {% endfor %}
         </tbody>
     </table>
+    </div>
 </body>
 </html>
