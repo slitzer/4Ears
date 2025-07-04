@@ -33,7 +33,7 @@
             <tr>
                 <td>{{ f.filename }}</td>
                 <td>{{ f.status }}</td>
-                <td>
+                <td class="result-cell">
                     {% if f.result %}
                         <span class="result-snippet">{{ f.result[:150] }}{% if f.result|length > 150 %}...{% endif %}</span>
                         <a class="btn btn-sm btn-secondary ms-2" href="/download/{{ f.id }}">Download</a>

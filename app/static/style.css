@@ -26,3 +26,14 @@ body.dark {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.result-cell {
+    display: flex;
+    align-items: center;
+    min-width: 450px;
+}
+
+.result-cell .result-snippet {
+    flex: 1;
+    min-width: 0;
+}
