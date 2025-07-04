@@ -146,6 +146,19 @@ def download_text(file_id: int):
     return Response(text, media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+@app.get("/download_summary/{file_id}")
+def download_summary(file_id: int):
+    db = SessionLocal()
+    record = db.get(Transcript, file_id)
+    if not record or not record.summary:
+        db.close()
+        return RedirectResponse("/", status_code=302)
+    text = record.summary
+    filename = f"{record.filename}_summary.txt"
+    db.close()
+    return Response(text, media_type="text/plain", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
 @app.post("/summarize/{file_id}")
 def summarize(file_id: int, background_tasks: BackgroundTasks, mode: str = Form("basic_summary")):
     db = SessionLocal()

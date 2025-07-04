@@ -37,3 +37,12 @@ body.dark {
     flex: 1;
     min-width: 0;
 }
+
+.clickable {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.modal-pre {
+    white-space: pre-wrap;
+}
