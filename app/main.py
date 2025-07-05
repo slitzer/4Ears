@@ -107,7 +107,13 @@ def settings_form(request: Request):
     return templates.TemplateResponse("settings.html", {"request": request, "user": user})
 
 @app.post("/settings", response_class=HTMLResponse)
-def settings_save(request: Request, hf_token: str = Form(""), openai_token: str = Form("")):
+def settings_save(
+    request: Request,
+    hf_token: str = Form(""),
+    openai_token: str = Form(""),
+    ollama_url: str = Form(""),
+    ollama_model: str = Form(""),
+):
     user = get_current_user(request)
     if not user:
         return RedirectResponse("/login", status_code=302)
@@ -115,6 +121,8 @@ def settings_save(request: Request, hf_token: str = Form(""), openai_token: str 
     db_user = db.get(User, user.id)
     db_user.hf_token = hf_token
     db_user.openai_token = openai_token
+    db_user.ollama_url = ollama_url
+    db_user.ollama_model = ollama_model
     db.commit()
     db.refresh(db_user)
     db.close()

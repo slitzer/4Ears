@@ -107,7 +107,15 @@ def summarize_record(record_id: int, mode: str) -> None:
         openai_token = (
             user.openai_token if user and user.openai_token else os.getenv("OPENAI_API_KEY")
         )
-        summary = summarize(text, mode, openai_api_key=openai_token)
+        ollama_url = user.ollama_url if user and user.ollama_url else os.getenv("OLLAMA_URL")
+        ollama_model = user.ollama_model if user and user.ollama_model else os.getenv("OLLAMA_MODEL")
+        summary = summarize(
+            text,
+            mode,
+            openai_api_key=openai_token,
+            ollama_url=ollama_url,
+            ollama_model=ollama_model,
+        )
         record.summary_status = "completed"
         record.summary = summary
         db.commit()

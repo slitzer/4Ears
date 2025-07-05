@@ -3,11 +3,17 @@ import requests
 import openai
 
 
-def summarize(text: str, mode: str = "basic_summary", openai_api_key: str | None = None) -> str:
+def summarize(
+    text: str,
+    mode: str = "basic_summary",
+    openai_api_key: str | None = None,
+    ollama_url: str | None = None,
+    ollama_model: str | None = None,
+) -> str:
     engine = os.getenv("SUMMARIZATION_ENGINE", "openai")
     if engine == "openai":
         return summarize_openai(text, mode, openai_api_key)
-    return summarize_ollama(text, mode)
+    return summarize_ollama(text, mode, url=ollama_url, model=ollama_model)
 
 
 def summarize_openai(text: str, mode: str, api_key: str | None = None) -> str:
@@ -27,13 +33,19 @@ def summarize_openai(text: str, mode: str, api_key: str | None = None) -> str:
     return response.choices[0].message.content
 
 
-def summarize_ollama(text: str, mode: str) -> str:
+def summarize_ollama(
+    text: str,
+    mode: str,
+    *,
+    url: str | None = None,
+    model: str | None = None,
+) -> str:
     payload = {
-        "model": os.getenv("OLLAMA_MODEL", "mistral"),
+        "model": model or os.getenv("OLLAMA_MODEL", "mistral"),
         "prompt": f"Summarize the following transcript ({mode}):\n\n{text}",
         "stream": False,
     }
-    url = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
+    url = url or os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
     response = requests.post(url, json=payload, timeout=60)
     response.raise_for_status()
     data = response.json()
