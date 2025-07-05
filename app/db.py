@@ -30,6 +30,14 @@ def _ensure_schema() -> None:
             if "user_id" not in columns:
                 conn.execute(text("ALTER TABLE transcripts ADD COLUMN user_id INTEGER"))
 
+    if "users" in inspector.get_table_names():
+        columns = {c["name"] for c in inspector.get_columns("users")}
+        with engine.begin() as conn:
+            if "ollama_url" not in columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN ollama_url TEXT"))
+            if "ollama_model" not in columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN ollama_model TEXT"))
+
 class Transcript(Base):
     __tablename__ = "transcripts"
 
@@ -51,6 +59,8 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     hf_token = Column(String, nullable=True)
     openai_token = Column(String, nullable=True)
+    ollama_url = Column(String, nullable=True)
+    ollama_model = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)

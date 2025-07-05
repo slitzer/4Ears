@@ -20,8 +20,9 @@ body.dark {
     margin: 0 auto;
 }
 
+
 .result-snippet {
-    max-width: 400px;
+    max-width: 350px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -30,7 +31,7 @@ body.dark {
 .result-cell {
     display: flex;
     align-items: center;
-    min-width: 450px;
+    min-width: 350px;
 }
 
 .result-cell .result-snippet {

@@ -24,6 +24,7 @@
         <button class="btn btn-primary mt-2" type="submit">Upload & Transcribe</button>
     </form>
     <h2>Past Transcripts</h2>
+    <div class="table-responsive">
     <table class="table table-striped">
         <thead>
             <tr><th>File</th><th>Status</th><th>Result</th><th>Summary</th><th>Created</th></tr>
@@ -58,6 +59,7 @@
         {% endfor %}
         </tbody>
     </table>
+    </div>
     </div>
 
     <div class="modal fade" id="textModal" tabindex="-1" aria-hidden="true">
